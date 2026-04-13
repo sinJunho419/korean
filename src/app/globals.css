@@ -1,0 +1,53 @@
+/* ── 전역 리셋 & 폰트 ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --font: var(--font-pretendard), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-serif: 'Noto Serif KR', serif;
+
+  /* 포인트 컬러 (밝은 연두 기반) */
+  --blue: #689F38;
+  --blue-l: #C5E1A5;
+  --pink: #66BB6A;
+  --pink-l: #A5D6A7;
+  --mint: #4CAF50;
+  --mint-l: #81C784;
+  --yellow: #AED581;
+
+  /* 배경 & 텍스트 */
+  --bg: #E8F5E9;
+  --surface: rgba(200, 230, 201, 0.7);
+  --border: #A5D6A7;
+  --text: #1B5E20;
+  --text-sub: #388E3C;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --blur: blur(20px);
+  --glow: 0 0 40px rgba(139, 195, 74, 0.15);
+}
+
+html,
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font);
+}

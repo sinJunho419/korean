@@ -1,0 +1,1015 @@
+/* ════════════════════════════════════════
+   사자성어 학습 앱 — Dark Mode UI
+   ════════════════════════════════════════ */
+
+/* ── 페이지 래퍼 ── */
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1.25rem 4rem;
+  overflow: hidden;
+}
+
+.page::before,
+.page::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page::before {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #2d4a1e 0%, #1a2e12 60%, transparent 100%);
+  top: -140px;
+  left: -160px;
+}
+
+.page::after {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, #8BC34A 0%, #2d4a1e 60%, transparent 100%);
+  bottom: -120px;
+  right: -120px;
+}
+
+/* ── 벤토 그리드 래퍼 ── */
+.bento {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── 공통 Glass 카드 ── */
+.glass {
+  background: rgba(20, 36, 20, 0.8);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1.5px solid rgba(139, 195, 74, 0.25);
+  border-radius: 1.75rem;
+  box-shadow: var(--shadow);
+  color: #ffffff;
+}
+
+/* ── 컨트롤 래퍼 ── */
+.controlsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+/* 1줄: 셀렉트 행 */
+.selectRow {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.selectRow select {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 1rem;
+  border: 1.5px solid rgba(139, 195, 74, 0.25);
+  background: rgba(20, 36, 20, 0.8);
+  color: #ffffff;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23818cf8' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  padding-right: 2.2rem;
+}
+
+.selectRow select:focus {
+  border-color: var(--blue);
+}
+
+/* ── 탭 ── */
+.selectHint {
+  text-align: center;
+  padding: 1.2rem 0 0.4rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.4rem;
+}
+
+.tabBtn {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.4rem;
+  border: none;
+  border-radius: 1.25rem;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.tabBtn:hover:not(:disabled) {
+  background: rgba(139, 195, 74, 0.12);
+  color: #8BC34A;
+}
+
+.tabBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tabActive {
+  background: linear-gradient(135deg, var(--blue), #8BC34A) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(139, 195, 74, 0.35);
+}
+
+/* ── 플래시카드 ── */
+.cardWrap {
+  perspective: 1000px;
+}
+
+.card {
+  position: relative;
+  height: 260px;
+  cursor: pointer;
+  user-select: none;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.cardFace {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  padding: 1.5rem;
+}
+
+.cardFront {
+  background: linear-gradient(145deg, rgba(20, 36, 20, 0.95) 0%, rgba(28, 44, 28, 0.9) 100%);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1.5px solid rgba(139, 195, 74, 0.2);
+  box-shadow: var(--glow), var(--shadow);
+  gap: 0.6rem;
+}
+
+.cardBack {
+  background: linear-gradient(145deg, rgba(20, 36, 20, 0.9) 0%, rgba(28, 44, 28, 0.85) 100%);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1.5px solid rgba(139, 195, 74, 0.3);
+  box-shadow: 0 8px 32px rgba(139, 195, 74, 0.2), 0 0 60px rgba(139, 195, 74, 0.08);
+  transform: rotateY(180deg);
+  gap: 0.5rem;
+}
+
+/* 사자성어 텍스트 (앞면) */
+.idiomText {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.15em;
+  font-family: var(--font-serif);
+}
+
+/* 한자 (앞면 하단) */
+.hanjaText {
+  font-size: 1.4rem;
+  color: #8BC34A;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+/* 뜻 (뒷면) */
+.meaningText {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #8BC34A;
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* 유래/예문 (뒷면) */
+.exampleText {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+/* ruby 한자 병기 */
+.rubyText {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.2em;
+  font-family: var(--font-serif);
+  line-height: 2;
+}
+
+.rubyText rt {
+  font-size: 0.45em;
+  color: #AED581;
+  font-weight: 600;
+}
+
+/* ── 진행 표시 ── */
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(139, 195, 74, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #8BC34A, #66BB6A);
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressText {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+
+/* ── 힌트 ── */
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  text-align: center;
+  padding: 0.5rem 1.25rem;
+}
+
+/* ── 이전/다음 네비게이션 ── */
+.nav {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.navBtn {
+  flex: 1;
+  padding: 0.8rem;
+  border-radius: 1.25rem;
+  border: 1.5px solid rgba(139, 195, 74, 0.25);
+  background: rgba(20, 36, 20, 0.8);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+}
+
+.navBtn:hover:not(:disabled) {
+  background: rgba(139, 195, 74, 0.15);
+  border-color: #689F38;
+}
+
+.navBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ── 빈 상태 ── */
+.empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* ════════════════════════════════════════
+   퀴즈 공통 스타일
+   ════════════════════════════════════════ */
+.quiz {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* 퀴즈 문제 카드 */
+.quizQuestion {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(145deg, rgba(20, 36, 20, 0.8) 0%, rgba(28, 44, 28, 0.7) 100%) !important;
+}
+
+.quizWord {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.quizHint {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+/* 선택지 그리드 (의미 퀴즈) */
+.quizOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.quizOption {
+  padding: 1rem 0.75rem;
+  border-radius: 1.25rem;
+  border: 1.5px solid rgba(139, 195, 74, 0.2);
+  background: rgba(20, 36, 20, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+  line-height: 1.4;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+.quizOption:hover:not(:disabled) {
+  border-color: #689F38;
+  background: rgba(139, 195, 74, 0.12);
+}
+
+.quizOption:disabled {
+  cursor: default;
+}
+
+.optCorrect {
+  border-color: #4CAF50 !important;
+  background: rgba(76, 175, 80, 0.2) !important;
+  color: #81C784 !important;
+}
+
+.optWrong {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+}
+
+.optDim {
+  opacity: 0.3;
+}
+
+/* 오답 피드백 */
+.wrongFeedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.2rem 1.5rem;
+  font-size: 0.95rem;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.wrongFeedback strong {
+  color: #81C784;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+/* ── 타이머 바 ── */
+.timerBarTrack {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.timerBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.01s linear, background-color 0.3s;
+}
+
+/* 결과 화면 */
+.quizResult {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.resultEmoji {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.resultTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+.resultScore {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.resultCorrect {
+  color: #81C784;
+}
+
+.resultTotal {
+  color: var(--text-sub);
+  font-weight: 500;
+  font-size: 2.2rem;
+}
+
+.resultPct {
+  font-size: 1rem;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
+.resultSuccess {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #81C784;
+  margin-top: 0.2rem;
+}
+
+.resultFail {
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.4);
+  margin-top: 0.2rem;
+}
+
+.retryBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 1.25rem;
+  border: none;
+  background: linear-gradient(135deg, var(--blue), #8BC34A);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(139, 195, 74, 0.4);
+  transition: opacity 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.retryBtn:hover {
+  opacity: 0.88;
+}
+
+/* ════════════════════════════════════════
+   글자 배열 퀴즈 (ArrangeQuiz) 전용
+   ════════════════════════════════════════ */
+
+/* 힌트 (뜻) 영역 */
+.arrangeHint {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.6;
+  padding: 1.5rem;
+  word-break: keep-all;
+}
+
+/* 조합 슬롯 (선택한 글자가 들어가는 칸) */
+.arrangeSlots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 72px;
+  padding: 1rem;
+}
+
+.arrangeSlot {
+  width: 60px;
+  height: 60px;
+  border-radius: 1rem;
+  border: 2px dashed rgba(139, 195, 74, 0.3);
+  background: rgba(20, 36, 20, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  font-family: var(--font-serif);
+  transition: all 0.2s;
+}
+
+.arrangeSlotFilled {
+  border-style: solid;
+  border-color: rgba(139, 195, 74, 0.5);
+  background: rgba(139, 195, 74, 0.12);
+  cursor: pointer;
+}
+
+.arrangeSlotCorrect {
+  border-color: #4CAF50 !important;
+  background: rgba(76, 175, 80, 0.15) !important;
+  color: #81C784 !important;
+}
+
+.arrangeSlotWrong {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #f87171 !important;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* 글자 선택 버튼 */
+.arrangeChars {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1rem 1rem;
+}
+
+.arrangeCharBtn {
+  width: 64px;
+  height: 64px;
+  border-radius: 1.1rem;
+  border: 2px solid rgba(174, 213, 129, 0.35);
+  background: linear-gradient(145deg, rgba(20, 36, 20, 0.8), rgba(28, 44, 28, 0.7));
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 900;
+  font-family: var(--font-serif);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.arrangeCharBtn:hover:not(:disabled) {
+  border-color: #8BC34A;
+  background: rgba(139, 195, 74, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(139, 195, 74, 0.2);
+}
+
+.arrangeCharBtn:disabled {
+  opacity: 0.2;
+  cursor: default;
+  transform: scale(0.9);
+}
+
+/* 글자 분해 피드백 */
+.charBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.25rem;
+}
+
+.charBreakdownRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.charBreakdownChar {
+  font-size: 1.3rem;
+  font-weight: 900;
+  font-family: var(--font-serif);
+  color: #ffffff;
+  width: 36px;
+  text-align: center;
+}
+
+.charBreakdownArrow {
+  color: #ffffff;
+  font-size: 0.8rem;
+}
+
+.charBreakdownMeaning {
+  color: #AED581;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* 타입 배지 */
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, rgba(20, 36, 20, 0.8), rgba(28, 44, 28, 0.7));
+  border: 2px solid rgba(174, 213, 129, 0.4);
+  color: #ffffff;
+}
+
+/* ══════════════════════════════════════════
+   오답 관리 시스템
+   ══════════════════════════════════════════ */
+
+.wrongActionsRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.revengeBtn {
+  flex: 1;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  border-radius: 1rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.revengeBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
+}
+
+.revengeBtn:disabled {
+  background: #334155;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* 오답 단어 목록 */
+.wrongWordsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 195, 74, 0.2) transparent;
+}
+
+.wrongWordCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.25rem;
+  gap: 0.75rem;
+}
+
+.wrongWordMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wrongWordText {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  font-family: var(--font-serif);
+}
+
+.wrongWordMeaning {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wrongWordMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.wrongCountBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+/* 연속 정답 게이지 */
+.consecutiveRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.consecutiveDots {
+  display: flex;
+  gap: 4px;
+}
+
+.dotFilled {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.4);
+}
+
+.dotEmpty {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.consecutiveLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.wrongCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f87171;
+  margin-left: auto;
+}
+
+/* 졸업 관련 */
+.graduatedBox {
+  width: 100%;
+  background: rgba(76, 175, 80, 0.08);
+  border: 1.5px solid rgba(76, 175, 80, 0.2);
+  border-radius: 1rem;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.graduatedTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #81C784;
+  margin: 0 0 0.5rem;
+}
+
+.graduatedList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.graduatedWord {
+  background: rgba(76, 175, 80, 0.15);
+  color: #81C784;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-family: var(--font-serif);
+}
+
+.graduationToast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(102, 187, 106, 0.1));
+  border: 1.5px solid rgba(76, 175, 80, 0.3);
+  border-radius: 1.25rem;
+  color: #81C784;
+  font-size: 0.95rem;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
+}
+
+.masteredBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #81C784;
+  background: rgba(76, 175, 80, 0.12);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+/* 필터 */
+.filterRow {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.35rem;
+}
+
+.filterBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0.5rem 0.4rem;
+  border: none;
+  border-radius: 1rem;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.filterBtn:hover {
+  background: rgba(139, 195, 74, 0.1);
+}
+
+.filterActive {
+  background: linear-gradient(135deg, var(--blue), #8BC34A) !important;
+  color: #fff !important;
+  box-shadow: 0 3px 12px rgba(139, 195, 74, 0.3);
+}
+
+.filterDanger {
+  background: linear-gradient(135deg, #ef4444, #f87171) !important;
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.filterGrad {
+  background: linear-gradient(135deg, #4CAF50, #66BB6A) !important;
+  box-shadow: 0 3px 12px rgba(76, 175, 80, 0.3) !important;
+}
+
+.filterGraduated {
+  background: linear-gradient(135deg, #388E3C, #4CAF50) !important;
+  box-shadow: 0 3px 12px rgba(76, 175, 80, 0.3) !important;
+}
+
+.filterCount {
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 6px;
+  border-radius: 6px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ── 성공 횟수 & 메달 ── */
+.progressStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.2rem;
+  gap: 0.75rem;
+}
+
+.successDots {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.statusLabel {
+  font-size: 0.8rem;
+  color: #ffffff;
+  font-weight: 600;
+  margin-right: 0.2rem;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s;
+}
+
+.dotFilledGreen {
+  background: #81C784;
+  border-color: #66BB6A;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+}
+
+.successText {
+  font-size: 0.8rem;
+  color: #ffffff;
+  font-weight: 700;
+  margin-left: 0.1rem;
+}
+
+.medalDisplay {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 1rem;
+  padding: 0.25rem 0.6rem;
+}
+
+.medalIcon {
+  font-size: 1.1rem;
+}
+
+.medalCount {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fbbf24;
+}

@@ -64,10 +64,12 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
     const [selected, setSelected] = useState<number[]>([])  // shuffledChars의 인덱스
     // 각 shuffled 글자의 사용 여부
     const [used, setUsed] = useState<boolean[]>([])
+    const [timedOut, setTimedOut] = useState(false)
 
     const wrongIdiomIdsRef = useRef<number[]>([])
     const wrongSavedRef = useRef(false)
     const finishCalledRef = useRef(false)
+    const nextBtnRef = useRef<HTMLButtonElement>(null)
 
     const initQuiz = useCallback(() => {
         setQuiz(buildArrangeQuiz(idioms))
@@ -92,20 +94,15 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
         setUsed(new Array(current.shuffledChars.length).fill(false))
     }, [index, quiz])
 
-    // 정답/오답 후 자동 다음 문제
-    useEffect(() => {
-        if (quizState !== 'correct' && quizState !== 'wrong') return
-        const delay = quizState === 'correct' ? 800 : 2000
-        const timer = setTimeout(() => {
-            if (index + 1 >= quiz.length) setQuizState('finished')
-            else {
-                setIndex(i => i + 1)
-                setQuizState('playing')
-                setTimerReset(t => t + 1)
-            }
-        }, delay)
-        return () => clearTimeout(timer)
-    }, [quizState, index, quiz.length])
+    function handleNext() {
+        setTimedOut(false)
+        if (index + 1 >= quiz.length) setQuizState('finished')
+        else {
+            setIndex(i => i + 1)
+            setQuizState('playing')
+            setTimerReset(t => t + 1)
+        }
+    }
 
     // 퀴즈 종료 처리
     useEffect(() => {
@@ -131,35 +128,28 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
                 })()
             }
         }
-        // 오답 저장
-        if (wrongSavedRef.current || wrongIdiomIdsRef.current.length === 0) return
-        wrongSavedRef.current = true
-
-        async function saveWrongWords() {
-            const ids = wrongIdiomIdsRef.current
-            try {
-                const stored: Record<number, { wrong_count: number; consecutive_correct: number; status: string; last_wrong_at: string }> =
-                    JSON.parse(localStorage.getItem('local_korean_wrong') || '{}')
-                for (const wid of ids) {
-                    const existing = stored[wid] || { wrong_count: 0, consecutive_correct: 0, status: 'Learning', last_wrong_at: '' }
-                    existing.wrong_count += 1
-                    existing.consecutive_correct = 0
-                    existing.status = 'Learning'
-                    existing.last_wrong_at = new Date().toISOString()
-                    stored[wid] = existing
-                }
-                localStorage.setItem('local_korean_wrong', JSON.stringify(stored))
-            } catch { /* ignore */ }
-
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-            await supabase.rpc('record_korean_wrong_words', {
-                p_user_id: user.user_metadata?.login_info_id,
-                p_idiom_ids: ids,
-            })
-        }
-        saveWrongWords()
     }, [quizState, supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    async function saveWrongWord(idiomId: number) {
+        try {
+            const stored: Record<number, { wrong_count: number; consecutive_correct: number; status: string; last_wrong_at: string }> =
+                JSON.parse(localStorage.getItem('local_korean_wrong') || '{}')
+            const existing = stored[idiomId] || { wrong_count: 0, consecutive_correct: 0, status: 'Learning', last_wrong_at: '' }
+            existing.wrong_count += 1
+            existing.consecutive_correct = 0
+            existing.status = 'Learning'
+            existing.last_wrong_at = new Date().toISOString()
+            stored[idiomId] = existing
+            localStorage.setItem('local_korean_wrong', JSON.stringify(stored))
+        } catch { /* ignore */ }
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        await supabase.rpc('record_korean_wrong_words', {
+            p_user_id: user.user_metadata?.login_info_id,
+            p_idiom_ids: [idiomId],
+        })
+    }
 
     const current = quiz[index]
     if (!current) return null
@@ -183,7 +173,6 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
                 setScore(s => s + 1)
                 setQuizState('correct')
             } else {
-                wrongIdiomIdsRef.current.push(current.idiom.id)
                 setQuizState('wrong')
             }
         }
@@ -205,7 +194,7 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
     // 타임아웃
     function handleTimeout() {
         if (quizState !== 'playing') return
-        wrongIdiomIdsRef.current.push(current.idiom.id)
+        setTimedOut(true)
         setQuizState('wrong')
     }
 
@@ -293,11 +282,10 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
                     const filled = i < selected.length
                     let slotCls = styles.arrangeSlot
                     if (filled) slotCls += ` ${styles.arrangeSlotFilled}`
-                    if (quizState === 'correct' && filled) slotCls += ` ${styles.arrangeSlotCorrect}`
                     if (quizState === 'wrong' && filled) {
-                        // 맞는 위치면 초록, 틀린 위치면 빨강
                         const isCharCorrect = selectedChars[i] === current.correctChars[i]
-                        slotCls += isCharCorrect ? ` ${styles.arrangeSlotCorrect}` : ` ${styles.arrangeSlotWrong}`
+                        if (isCharCorrect) slotCls += ` ${styles.arrangeSlotCorrect}`
+                        else slotCls += ` ${styles.arrangeSlotWrong}`
                     }
 
                     return (
@@ -333,9 +321,9 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
                 ))}
             </div>
 
-            {/* 오답 피드백: 글자별 한자·훈음 분해 */}
+            {/* 정답/오답 피드백 */}
             <AnimatePresence>
-                {quizState === 'wrong' && (
+                {(quizState === 'correct' || quizState === 'wrong') && (
                     <motion.div
                         className={`${styles.glass} ${styles.wrongFeedback}`}
                         initial={{ opacity: 0, y: 10 }}
@@ -343,12 +331,12 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
                         exit={{ opacity: 0 }}
                         transition={spring}
                     >
-                        <p>정답: <strong style={{ letterSpacing: '0.15em', fontSize: '1.2rem' }}>{current.idiom.idiom}</strong>
-                            {current.idiom.hanja && (
-                                <span style={{ color: '#a78bfa', marginLeft: '0.5rem', fontSize: '0.9rem' }}>
-                                    ({current.idiom.hanja})
-                                </span>
-                            )}
+                        <p>
+                            {quizState === 'correct'
+                                ? '✅ 정답!'
+                                : timedOut
+                                    ? <>⏰ 시간 초과!</>
+                                    : <>오답!</>}
                         </p>
                         {/* 글자별 훈음 */}
                         {current.idiom.char_meanings && (
@@ -372,21 +360,22 @@ export default function ArrangeQuizClient({ idioms, level, setNo, onExit, onFini
                 )}
             </AnimatePresence>
 
-            {/* 정답 피드백 */}
-            <AnimatePresence>
-                {quizState === 'correct' && (
-                    <motion.div
-                        className={`${styles.glass}`}
-                        style={{ padding: '1rem', textAlign: 'center', color: '#81C784', fontWeight: 800, fontSize: '1.1rem' }}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={spring}
-                    >
-                        정답!
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* 다음 버튼 */}
+            {(quizState === 'correct' || quizState === 'wrong') && (
+                <motion.button
+                    ref={nextBtnRef}
+                    className={styles.navBtn}
+                    onClick={handleNext}
+                    whileTap={{ scale: 0.93 }}
+                    transition={spring}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onAnimationComplete={() => nextBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+                    style={{ width: '100%' }}
+                >
+                    다음 →
+                </motion.button>
+            )}
         </div>
     )
 }

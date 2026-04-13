@@ -16,7 +16,7 @@ interface RevengeQuestion {
 }
 
 type Mode = 'list' | 'revenge'
-type QuizState = 'playing' | 'wrong' | 'finished'
+type QuizState = 'playing' | 'correct' | 'wrong' | 'finished'
 type ListFilter = 'all' | 'danger' | 'near_grad' | 'graduated'
 
 const spring: Transition = { type: 'spring', stiffness: 420, damping: 30 }
@@ -46,6 +46,7 @@ export default function WrongWordsClient({ onExit }: Props) {
     const [consecutiveMap, setConsecutiveMap] = useState<Record<number, number>>({})
 
     const prevIndexRef = useRef(-1)
+    const nextBtnRef = useRef<HTMLButtonElement>(null)
 
     useEffect(() => {
         async function init() {
@@ -241,10 +242,7 @@ export default function WrongWordsClient({ onExit }: Props) {
                 })
             }
 
-            setTimeout(() => {
-                if (index + 1 >= quiz.length) setQuizState('finished')
-                else { setIndex(i => i + 1); setSelected(null); setQuizState('playing'); setTimerReset(t => t + 1) }
-            }, status === 'Mastered' ? 1200 : 800)
+            setQuizState('correct' as QuizState)
         } else {
             if (option !== '__timeout__') {
                 if (isLocal) {
@@ -261,15 +259,10 @@ export default function WrongWordsClient({ onExit }: Props) {
         }
     }
 
-    // 오답 후 1.5초 자동 넘기기
-    useEffect(() => {
-        if (quizState !== 'wrong') return
-        const timer = setTimeout(() => {
-            if (index + 1 >= quiz.length) setQuizState('finished')
-            else { setIndex(i => i + 1); setSelected(null); setQuizState('playing'); setTimerReset(t => t + 1) }
-        }, 1500)
-        return () => clearTimeout(timer)
-    }, [quizState, index, quiz.length])
+    function handleNext() {
+        if (index + 1 >= quiz.length) setQuizState('finished')
+        else { setIndex(i => i + 1); setSelected(null); setQuizState('playing'); setTimerReset(t => t + 1) }
+    }
 
     function backToList() {
         setMode('list')
@@ -433,19 +426,54 @@ export default function WrongWordsClient({ onExit }: Props) {
                     })}
                 </div>
 
-                {/* 오답 피드백 */}
+                {/* 정답/오답 피드백 */}
                 <AnimatePresence>
-                    {quizState === 'wrong' && (
+                    {(quizState === 'correct' || quizState === 'wrong') && (
                         <motion.div className={`${styles.glass} ${styles.wrongFeedback}`}
                             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                             transition={spring}>
                             <p>
-                                {selected === '__timeout__' ? '⏰ 시간 초과! ' : ''}
-                                정답: <strong>{current.correct}</strong>
+                                {quizState === 'correct'
+                                    ? '✅ 정답!'
+                                    : selected === '__timeout__'
+                                        ? <>⏰ 시간 초과!</>
+                                        : <>오답!</>}
                             </p>
+                            {/* 글자별 훈음 */}
+                            {current.entry.idiom.char_meanings && (
+                                <div className={styles.charBreakdown}>
+                                    {current.entry.idiom.idiom.split('').map((char, i) => {
+                                        const meaning = current.entry.idiom.char_meanings?.[char]
+                                        return (
+                                            <div key={i} className={styles.charBreakdownRow}>
+                                                <span className={styles.charBreakdownChar}>{char}</span>
+                                                <span className={styles.charBreakdownArrow}>→</span>
+                                                <span className={styles.charBreakdownMeaning}>{meaning || ''}</span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* 다음 버튼 */}
+                {(quizState === 'correct' || quizState === 'wrong') && (
+                    <motion.button
+                        ref={nextBtnRef}
+                        className={styles.navBtn}
+                        onClick={handleNext}
+                        whileTap={{ scale: 0.93 }}
+                        transition={spring}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onAnimationComplete={() => nextBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+                        style={{ width: '100%' }}
+                    >
+                        다음 →
+                    </motion.button>
+                )}
             </div>
         )
     }

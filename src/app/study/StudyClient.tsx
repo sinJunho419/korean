@@ -135,65 +135,68 @@ export default function StudyClient() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...spring, delay: 0.08 } as Transition}
                 >
-                    {/* 레벨 & 세트 선택 */}
-                    <div className={styles.selectRow}>
-                        <select value={level ?? ''} onChange={e => changeLevel((e.target.value || null) as Level | null)} disabled={isPending}>
-                            <option value="" disabled>난이도 선택</option>
-                            {TIER_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                        </select>
-                        <select
-                            value={setNo ?? ''}
-                            onChange={e => changeSet(Number(e.target.value))}
-                            disabled={isPending || !level}
-                        >
-                            <option value="" disabled>Set 선택</option>
-                            {availableSets.map(s => (
-                                <option key={s} value={s}>Set {s}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* 성공 횟수 & 메달 */}
-                    {isReady && (
-                        <div className={styles.progressStatus}>
-                            <div className={styles.successDots}>
-                                <span className={styles.statusLabel}>테스트</span>
-                                {[0, 1, 2].map(i => (
-                                    <span key={i} className={`${styles.dot} ${i < successCount ? styles.dotFilledGreen : ''}`} />
-                                ))}
-                                <span className={styles.successText}>{successCount}/3</span>
+                    {/* 레벨 & 세트 선택 (오답노트 탭에서는 숨김) */}
+                    {tab !== 'wrong' && (
+                        <>
+                            <div className={styles.selectRow}>
+                                <select value={level ?? ''} onChange={e => changeLevel((e.target.value || null) as Level | null)} disabled={isPending}>
+                                    <option value="" disabled>난이도 선택</option>
+                                    {TIER_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                                </select>
+                                <select
+                                    value={setNo ?? ''}
+                                    onChange={e => changeSet(Number(e.target.value))}
+                                    disabled={isPending || !level}
+                                >
+                                    <option value="" disabled>Set 선택</option>
+                                    {availableSets.map(s => (
+                                        <option key={s} value={s}>Set {s}</option>
+                                    ))}
+                                </select>
                             </div>
-                            {medalCount > 0 && (
-                                <div className={styles.medalDisplay}>
-                                    <span className={styles.medalIcon}>🏅</span>
-                                    <span className={styles.medalCount}>{medalCount}</span>
+
+                            {/* 성공 횟수 & 메달 */}
+                            {isReady && (
+                                <div className={styles.progressStatus}>
+                                    <div className={styles.successDots}>
+                                        <span className={styles.statusLabel}>테스트</span>
+                                        {[0, 1, 2].map(i => (
+                                            <span key={i} className={`${styles.dot} ${i < successCount ? styles.dotFilledGreen : ''}`} />
+                                        ))}
+                                        <span className={styles.successText}>{successCount}/3</span>
+                                    </div>
+                                    {medalCount > 0 && (
+                                        <div className={styles.medalDisplay}>
+                                            <span className={styles.medalIcon}>🏅</span>
+                                            <span className={styles.medalCount}>{medalCount}</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                        </div>
+                        </>
                     )}
 
                     {/* 탭 */}
-                    {isReady ? (
-                        <div className={styles.tabs}>
-                            {([
-                                { key: 'study' as Tab, label: '학습' },
-                                { key: 'meaning' as Tab, label: '의미 퀴즈' },
-                                { key: 'arrange' as Tab, label: '배열 퀴즈' },
-                                { key: 'wrong' as Tab, label: '오답노트' },
-                            ]).map(t => (
-                                <motion.button
-                                    key={t.key}
-                                    className={`${styles.tabBtn} ${tab === t.key ? styles.tabActive : ''}`}
-                                    onClick={() => setTab(t.key)}
-                                    disabled={t.key !== 'wrong' && idioms.length === 0}
-                                    whileTap={{ scale: 0.93 }}
-                                    transition={spring}
-                                >
-                                    {t.label}
-                                </motion.button>
-                            ))}
-                        </div>
-                    ) : (
+                    <div className={styles.tabs}>
+                        {([
+                            { key: 'study' as Tab, label: '학습' },
+                            { key: 'meaning' as Tab, label: '의미 퀴즈' },
+                            { key: 'arrange' as Tab, label: '배열 퀴즈' },
+                            { key: 'wrong' as Tab, label: '오답노트' },
+                        ]).map(t => (
+                            <motion.button
+                                key={t.key}
+                                className={`${styles.tabBtn} ${tab === t.key ? styles.tabActive : ''}`}
+                                onClick={() => setTab(t.key)}
+                                disabled={t.key !== 'wrong' && !isReady}
+                                whileTap={{ scale: 0.93 }}
+                                transition={spring}
+                            >
+                                {t.label}
+                            </motion.button>
+                        ))}
+                    </div>
+                    {!isReady && tab !== 'wrong' && (
                         <p className={styles.selectHint}>
                             {!level ? '난이도와 세트를 선택하세요' : '세트를 선택하세요'}
                         </p>
@@ -201,8 +204,12 @@ export default function StudyClient() {
                 </motion.div>
 
                 {/* 탭 콘텐츠 */}
-                {isReady && <AnimatePresence mode="wait">
-                    {tab === 'study' ? (
+                <AnimatePresence mode="wait">
+                    {tab === 'wrong' ? (
+                        <motion.div key="wrong-content" {...fadeUp} transition={{ ...spring } as Transition}>
+                            <WrongWordsClient onExit={() => setTab('study')} />
+                        </motion.div>
+                    ) : !isReady ? null : tab === 'study' ? (
                         isPending ? (
                             <motion.div key="loading" {...fadeUp} className={`${styles.glass} ${styles.empty}`}>
                                 로딩 중…
@@ -320,12 +327,8 @@ export default function StudyClient() {
                                 />
                             </motion.div>
                         )
-                    ) : tab === 'wrong' ? (
-                        <motion.div key="wrong-content" {...fadeUp} transition={{ ...spring } as Transition}>
-                            <WrongWordsClient onExit={() => setTab('study')} />
-                        </motion.div>
                     ) : null}
-                </AnimatePresence>}
+                </AnimatePresence>
             </div>
         </div>
     )

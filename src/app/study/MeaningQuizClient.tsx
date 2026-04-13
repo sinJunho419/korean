@@ -11,7 +11,7 @@ function shuffle<T>(arr: T[]): T[] {
     return [...arr].sort(() => Math.random() - 0.5)
 }
 
-type QuizState = 'playing' | 'wrong' | 'finished'
+type QuizState = 'playing' | 'correct' | 'wrong' | 'finished'
 
 interface QuizQuestion {
     idiom: Idiom
@@ -51,6 +51,7 @@ export default function MeaningQuizClient({ idioms, level, setNo, onExit, onFini
     const wrongIdiomIdsRef = useRef<number[]>([])
     const wrongSavedRef = useRef(false)
     const finishCalledRef = useRef(false)
+    const nextBtnRef = useRef<HTMLButtonElement>(null)
 
     const initQuiz = useCallback(() => {
         setQuiz(buildQuiz(idioms))
@@ -64,15 +65,10 @@ export default function MeaningQuizClient({ idioms, level, setNo, onExit, onFini
 
     useEffect(() => { initQuiz() }, [initQuiz])
 
-    // 오답 시 1.5초 후 자동 다음
-    useEffect(() => {
-        if (quizState !== 'wrong') return
-        const timer = setTimeout(() => {
-            if (index + 1 >= quiz.length) setQuizState('finished')
-            else { setIndex(i => i + 1); setSelected(null); setQuizState('playing'); setTimerReset(t => t + 1) }
-        }, 1500)
-        return () => clearTimeout(timer)
-    }, [quizState, index, quiz.length])
+    function handleNext() {
+        if (index + 1 >= quiz.length) setQuizState('finished')
+        else { setIndex(i => i + 1); setSelected(null); setQuizState('playing'); setTimerReset(t => t + 1) }
+    }
 
     // 종료 처리
     useEffect(() => {
@@ -98,41 +94,35 @@ export default function MeaningQuizClient({ idioms, level, setNo, onExit, onFini
                 })()
             }
         }
-        if (wrongSavedRef.current || wrongIdiomIdsRef.current.length === 0) return
-        wrongSavedRef.current = true
-
-        async function saveWrongWords() {
-            const ids = wrongIdiomIdsRef.current
-            try {
-                const stored: Record<number, { wrong_count: number; consecutive_correct: number; status: string; last_wrong_at: string }> =
-                    JSON.parse(localStorage.getItem('local_korean_wrong') || '{}')
-                for (const wid of ids) {
-                    const existing = stored[wid] || { wrong_count: 0, consecutive_correct: 0, status: 'Learning', last_wrong_at: '' }
-                    existing.wrong_count += 1
-                    existing.consecutive_correct = 0
-                    existing.status = 'Learning'
-                    existing.last_wrong_at = new Date().toISOString()
-                    stored[wid] = existing
-                }
-                localStorage.setItem('local_korean_wrong', JSON.stringify(stored))
-            } catch { /* ignore */ }
-
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-            await supabase.rpc('record_korean_wrong_words', {
-                p_user_id: user.user_metadata?.login_info_id,
-                p_idiom_ids: ids,
-            })
-        }
-        saveWrongWords()
     }, [quizState, supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    async function saveWrongWord(idiomId: number) {
+        try {
+            const stored: Record<number, { wrong_count: number; consecutive_correct: number; status: string; last_wrong_at: string }> =
+                JSON.parse(localStorage.getItem('local_korean_wrong') || '{}')
+            const existing = stored[idiomId] || { wrong_count: 0, consecutive_correct: 0, status: 'Learning', last_wrong_at: '' }
+            existing.wrong_count += 1
+            existing.consecutive_correct = 0
+            existing.status = 'Learning'
+            existing.last_wrong_at = new Date().toISOString()
+            stored[idiomId] = existing
+            localStorage.setItem('local_korean_wrong', JSON.stringify(stored))
+        } catch { /* ignore */ }
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        await supabase.rpc('record_korean_wrong_words', {
+            p_user_id: user.user_metadata?.login_info_id,
+            p_idiom_ids: [idiomId],
+        })
+    }
 
     const current = quiz[index]
     if (!current) return null
 
     function handleTimeout() {
         if (selected !== null || quizState !== 'playing') return
-        wrongIdiomIdsRef.current.push(current.idiom.id)
+        saveWrongWord(current.idiom.id)
         setSelected('__timeout__')
         setQuizState('wrong')
     }
@@ -142,14 +132,10 @@ export default function MeaningQuizClient({ idioms, level, setNo, onExit, onFini
         setSelected(option)
 
         if (option === current.correct) {
-            const next = score + 1
-            setScore(next)
-            setTimeout(() => {
-                if (index + 1 >= quiz.length) { setScore(next); setQuizState('finished') }
-                else { setIndex(i => i + 1); setSelected(null); setQuizState('playing'); setTimerReset(t => t + 1) }
-            }, 650)
+            setScore(s => s + 1)
+            setQuizState('correct' as QuizState)
         } else {
-            wrongIdiomIdsRef.current.push(current.idiom.id)
+            saveWrongWord(current.idiom.id)
             setQuizState('wrong')
         }
     }
@@ -260,9 +246,9 @@ export default function MeaningQuizClient({ idioms, level, setNo, onExit, onFini
                 })}
             </div>
 
-            {/* 오답 피드백 */}
+            {/* 정답/오답 피드백 */}
             <AnimatePresence>
-                {quizState === 'wrong' && (
+                {(quizState === 'correct' || quizState === 'wrong') && (
                     <motion.div
                         className={`${styles.glass} ${styles.wrongFeedback}`}
                         initial={{ opacity: 0, y: 10 }}
@@ -271,8 +257,11 @@ export default function MeaningQuizClient({ idioms, level, setNo, onExit, onFini
                         transition={spring}
                     >
                         <p>
-                            {selected === '__timeout__' ? '⏰ 시간 초과! ' : ''}
-                            정답: <strong>{current.correct}</strong>
+                            {quizState === 'correct'
+                                ? '✅ 정답!'
+                                : selected === '__timeout__'
+                                    ? <>⏰ 시간 초과!</>
+                                    : <>오답!</>}
                         </p>
                         {/* 글자별 훈음 */}
                         {current.idiom.char_meanings && (
@@ -292,6 +281,23 @@ export default function MeaningQuizClient({ idioms, level, setNo, onExit, onFini
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* 다음 버튼 */}
+            {(quizState === 'correct' || quizState === 'wrong') && (
+                <motion.button
+                    ref={nextBtnRef}
+                    className={styles.navBtn}
+                    onClick={handleNext}
+                    whileTap={{ scale: 0.93 }}
+                    transition={spring}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onAnimationComplete={() => nextBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+                    style={{ width: '100%' }}
+                >
+                    다음 →
+                </motion.button>
+            )}
         </div>
     )
 }

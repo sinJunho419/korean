@@ -53,7 +53,7 @@
 
 /* ── 공통 Glass 카드 ── */
 .glass {
-  background: rgba(20, 36, 20, 0.8);
+  background: rgba(20, 36, 20, 0.95);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border: 1.5px solid rgba(139, 195, 74, 0.25);
@@ -191,7 +191,7 @@
 }
 
 .cardBack {
-  background: linear-gradient(145deg, rgba(20, 36, 20, 0.9) 0%, rgba(28, 44, 28, 0.85) 100%);
+  background: linear-gradient(145deg, rgba(20, 36, 20, 0.95) 0%, rgba(28, 44, 28, 0.9) 100%);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border: 1.5px solid rgba(139, 195, 74, 0.3);
@@ -211,11 +211,12 @@
 
 /* 한자 (앞면 하단) */
 .hanjaText {
-  font-size: 1.4rem;
+  font-size: 2.2rem;
   color: #8BC34A;
   font-family: var(--font-serif);
   font-weight: 700;
   opacity: 0.7;
+  margin-top: 0.5rem;
 }
 
 /* 뜻 (뒷면) */
@@ -230,7 +231,7 @@
 /* 유래/예문 (뒷면) */
 .exampleText {
   font-size: 0.85rem;
-  color: var(--text-sub);
+  color: #ffffff;
   text-align: center;
   line-height: 1.6;
   margin-top: 0.5rem;
@@ -243,13 +244,16 @@
   color: #ffffff;
   letter-spacing: 0.2em;
   font-family: var(--font-serif);
-  line-height: 2;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .rubyText rt {
-  font-size: 0.45em;
+  font-size: 1em;
   color: #AED581;
   font-weight: 600;
+  display: block;
+  margin-bottom: 0.08em;
 }
 
 /* ── 진행 표시 ── */
@@ -347,7 +351,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(145deg, rgba(20, 36, 20, 0.8) 0%, rgba(28, 44, 28, 0.7) 100%) !important;
+  background: linear-gradient(145deg, rgba(20, 36, 20, 0.95) 0%, rgba(28, 44, 28, 0.9) 100%) !important;
 }
 
 .quizWord {
@@ -366,8 +370,8 @@
 
 /* 선택지 그리드 (의미 퀴즈) */
 .quizOptions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 0.7rem;
 }
 
@@ -404,19 +408,22 @@
 }
 
 .optCorrect {
-  border-color: #4CAF50 !important;
-  background: rgba(76, 175, 80, 0.2) !important;
-  color: #81C784 !important;
+  border-color: rgba(139, 195, 74, 0.2) !important;
+  background: rgba(20, 36, 20, 0.8) !important;
+  color: #ffffff !important;
 }
 
 .optWrong {
   border-color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.15) !important;
-  color: #f87171 !important;
+  background: transparent !important;
+  color: #ff0000 !important;
 }
 
 .optDim {
-  opacity: 0.3;
+  border-color: #4CAF50 !important;
+  background: rgba(76, 175, 80, 0.2) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  opacity: 1;
 }
 
 /* 오답 피드백 */
@@ -579,9 +586,10 @@
 }
 
 .arrangeSlotCorrect {
-  border-color: #4CAF50 !important;
-  background: rgba(76, 175, 80, 0.15) !important;
-  color: #81C784 !important;
+  border-color: rgba(174, 213, 129, 0.35) !important;
+  background: linear-gradient(145deg, rgba(20, 36, 20, 0.8), rgba(28, 44, 28, 0.7)) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .arrangeSlotWrong {
@@ -628,9 +636,12 @@
 }
 
 .arrangeCharBtn:disabled {
-  opacity: 0.2;
+  opacity: 0.03;
   cursor: default;
-  transform: scale(0.9);
+  transform: none;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 /* 글자 분해 피드백 */
@@ -752,18 +763,17 @@
 .wrongWordText {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #000000;
   letter-spacing: 0.05em;
   font-family: var(--font-serif);
 }
 
 .wrongWordMeaning {
   font-size: 0.8rem;
-  color: var(--text-sub);
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #2E7D32;
+  font-weight: 600;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .wrongWordMeta {
